@@ -9,7 +9,7 @@
 #property strict
 input int magic = 17;
 input double lots = 0.01;
-input double SL = 4;
+input double SL = 20;
 input double TP = 1.2;
 bool oportunity = true;
 
@@ -31,10 +31,11 @@ void OnTick()
    if(buyInterest()==true && OrdersTotal() < 2)
    {
       int buy = OrderSend(NULL,OP_BUY,lots,Ask,10,NULL,TP,NULL,magic,NULL,clrGreen);
-      int sellStop = OrderSend(NULL,OP_SELLSTOP,lots,iLow(NULL,PERIOD_D1,2)-20*_Point,10,NULL,NULL,NULL,magic,NULL,clrGreen);
+      int sellStop = OrderSend(NULL,OP_SELLSTOP,lots,iLow(NULL,PERIOD_D1,2)-20*_Point,10,NULL,NULL,NULL,magic,NULL,clrRed);
    }else if(buyInterest()==true && OrdersTotal()==2)
    {
-      
+      int closeOrder = OrderSelect(1,SELECT_BY_POS,MODE_TRADES);
+      int closeSellStop = OrderClose(OrderTicket(),lots,Ask,10,clrRed);
    }
          
   }
