@@ -30,20 +30,26 @@ void OnTick()
    
    if(buyInterest()==true && OrdersTotal() < 2)
    {
+      //int testBuy = OrderSend(symbol,cmd,volume,price,slippage,stoploss,takeprofit,comment,magic,dateexpiration,color);
       int buy = OrderSend(NULL,OP_BUY,lots,Ask,10,NULL,TP,NULL,magic,NULL,clrGreen);
-      int sellStop = OrderSend(NULL,OP_SELLSTOP,lots,iLow(NULL,PERIOD_D1,2)-20*_Point,10,NULL,NULL,NULL,magic,NULL,clrRed);
+      int sellStop = OrderSend(NULL,OP_SELLSTOP,lots,iLow(NULL,PERIOD_D1,1)-20*_Point,10,NULL,NULL,NULL,magic,NULL,clrRed);
    }else if(buyInterest()==true && OrdersTotal()==2)
    {
+      Print("111111111OrdersTotal: " + OrdersTotal());
       int closeOrder = OrderSelect(1,SELECT_BY_POS,MODE_TRADES);
       int closeSellStop = OrderClose(OrderTicket(),lots,Ask,10,clrRed);
+      Print("222222222OrdersTotal: " + OrdersTotal());
+      int sellStop2 = OrderSend(NULL,OP_SELLSTOP,lots,iLow(NULL,PERIOD_D1,1)-20*_Point,10,NULL,NULL,NULL,magic,NULL,clrRed);
+      Print("333333333OrdersTotal: " + OrdersTotal());
+      
    }
          
   }
   
 bool buyInterest()
 {
-   if(iClose(NULL,PERIOD_D1,1) > iClose(NULL,PERIOD_D1,2))
+   //if(iClose(NULL,PERIOD_D1,1) > iClose(NULL,PERIOD_D1,2))
       return true;
-   else
-      return false;  
+   //else
+   //   return false;  
 }
