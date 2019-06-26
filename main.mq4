@@ -12,6 +12,7 @@ input double lots = 0.01;
 input double SL = 20;
 input double TP = 1.2;
 bool oportunity = true;
+int slippage = 10;
 
 int OnInit()
   {
@@ -31,8 +32,8 @@ void OnTick()
    if(buyInterest()==true && OrdersTotal() < 2)
    {
       //int testBuy = OrderSend(symbol,cmd,volume,price,slippage,stoploss,takeprofit,comment,magic,dateexpiration,color);
-      int buy = OrderSend(NULL,OP_BUY,lots,Ask,10,NULL,TP,NULL,magic,NULL,clrGreen);
-      int sellStop = OrderSend(NULL,OP_SELLSTOP,lots,iLow(NULL,PERIOD_D1,1)-20*_Point,10,NULL,NULL,NULL,magic,NULL,clrRed);
+      int buy = OrderSend(NULL,OP_BUY,lots,Ask,slippage,NULL,TP,NULL,magic,NULL,clrGreen);
+      int sellStop = OrderSend(NULL,OP_SELLSTOP,lots,iLow(NULL,PERIOD_D1,1)-20*_Point,slippage,NULL,NULL,NULL,magic,NULL,clrRed);
    }else if(buyInterest()==true && OrdersTotal()==2)
    {
       Print("111111111OrdersTotal: " + OrdersTotal());
@@ -45,7 +46,7 @@ void OnTick()
          int closeSellStop = OrderDelete(OrderTicket(),clrRed);
       }      
       Print("222222222OrdersTotal: " + OrdersTotal());
-      int sellStop2 = OrderSend(NULL,OP_SELLSTOP,lots,iLow(NULL,PERIOD_D1,1)-20*_Point,10,NULL,NULL,NULL,magic,NULL,clrRed);
+      int sellStop2 = OrderSend(NULL,OP_SELLSTOP,lots,iLow(NULL,PERIOD_D1,1)-50*_Point,slippage,NULL,NULL,NULL,magic,NULL,clrRed);
       Print("333333333OrdersTotal: " + OrdersTotal());
       
    }
@@ -58,4 +59,21 @@ bool buyInterest()
       return true;
    //else
    //   return false;  
+}
+
+int MarketOrderSend(string symbol, int cmd, double volume, double price, int slipagge, double stoploss, double takeprofit, string comment)
+{
+   int newOrder;
+   
+   newOrder = OrderSend(symbol, cmd, volume, price, slippage, 0, 0, NULL, magic);
+   if(newOrder <= 0)Alert("OrderSend Error: ", GetLastError());
+   else
+   {
+      bool res = OrderModify(newOrder,0,stoploss,takeprofit,0);
+      if(!res){
+         Alert("OrderModify Error: ", GetLastError());
+         Alert("IMPORTANT: ORDER #", newOrder, " HAS NO STOPLOSS AND TAKEPROFIT");
+      }
+   }
+   return(newOrder);
 }
