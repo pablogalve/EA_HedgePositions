@@ -46,7 +46,16 @@ void OnTick()
          int closeSellStop = OrderDelete(OrderTicket(),clrRed);
       }      
       Print("222222222OrdersTotal: " + OrdersTotal());
-      int sellStop2 = OrderSend(NULL,OP_SELLSTOP,lots,iLow(NULL,PERIOD_D1,1)-50*_Point,slippage,NULL,NULL,NULL,magic,NULL,clrRed);
+      
+      //We check that sell stop order can be sent to market
+      if(iLow(NULL,PERIOD_D1,1)-50*_Point < Bid+10*_Point)
+      {
+         int sellStop2 = OrderSend(NULL,OP_SELLSTOP,lots,iLow(NULL,PERIOD_D1,1)-50*_Point,slippage,NULL,NULL,NULL,magic,NULL,clrRed);
+      }else
+      {
+         int sellStop2 = OrderSend(NULL,OP_SELLSTOP,lots,Bid-50*_Point,slippage,NULL,NULL,NULL,magic,NULL,clrRed);
+      }
+      
       Print("333333333OrdersTotal: " + OrdersTotal());
       
    }
