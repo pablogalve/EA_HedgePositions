@@ -32,57 +32,57 @@ void OnTick()
    if(buyInterest()==true && OrdersTotal() < 2)
    {
       //int testBuy = OrderSend(symbol,cmd,volume,price,slippage,stoploss,takeprofit,comment,magic,dateexpiration,color);
-      int buy = OrderSend(NULL,OP_BUY,lots,Ask,slippage,NULL,TP,NULL,magic,NULL,clrGreen);
-      int sellStop = OrderSend(NULL,OP_SELLSTOP,lots,iLow(NULL,PERIOD_D1,1)-20*_Point,slippage,NULL,NULL,NULL,magic,NULL,clrRed);
+      int buy = MarketOrderSend(NULL,OP_BUY,lots,Ask,slippage,NULL,TP,NULL);
+      int sellStop = MarketOrderSend(NULL,OP_SELLSTOP,lots,iLow(NULL,PERIOD_D1,1)-20*_Point,slippage,NULL,NULL,NULL);
    }else if(buyInterest()==true && OrdersTotal()==2)
    {
-      Print("111111111OrdersTotal: " + OrdersTotal());
+      //We close the last sell order. A buy + a sell = position with hedge. Closing a sell means closing the hedge and going long 
       int closeOrder = OrderSelect(1,SELECT_BY_POS,MODE_TRADES);
       if(OrderType()==OP_SELL)
-      {
+      {  //We close an opened order
          int closeSellStop = OrderClose(OrderTicket(),lots,Ask,10,clrRed);
       }else if(OrderType()==OP_SELLSTOP)
-      {
+      {  //We close a pending order
          int closeSellStop = OrderDelete(OrderTicket(),clrRed);
       }      
-      Print("222222222OrdersTotal: " + OrdersTotal());
       
       //We check that sell stop order can be sent to market
       if(iLow(NULL,PERIOD_D1,1)-50*_Point < Bid+10*_Point)
       {
-         int sellStop2 = OrderSend(NULL,OP_SELLSTOP,lots,iLow(NULL,PERIOD_D1,1)-50*_Point,slippage,NULL,NULL,NULL,magic,NULL,clrRed);
+         int sellStop2 = MarketOrderSend(NULL,OP_SELLSTOP,lots,iLow(NULL,PERIOD_D1,1)-50*_Point,slippage,NULL,NULL,NULL);
       }else
       {
-         int sellStop2 = OrderSend(NULL,OP_SELLSTOP,lots,Bid-50*_Point,slippage,NULL,NULL,NULL,magic,NULL,clrRed);
+         int sellStop2 = MarketOrderSend(NULL,OP_SELLSTOP,lots,Bid-50*_Point,slippage,NULL,NULL,NULL);
       }
-      
-      Print("333333333OrdersTotal: " + OrdersTotal());
-      
-   }
-         
+   }         
   }
   
 bool buyInterest()
 {
-   //if(iClose(NULL,PERIOD_D1,1) > iClose(NULL,PERIOD_D1,2))
+   if(iClose(NULL,PERIOD_D1,1) > iClose(NULL,PERIOD_D1,2))
       return true;
-   //else
-   //   return false;  
+   else
+      return false;  
+}
+
+bool CheckHedge(int cmd, int entryDistance)
+{  //We check that price exists to open a hedge position
+   if(cmd == OP_SELLSTOP)
+   {
+      return true;
+   }else if(cmd == OP_BUYSTOP)
+   {
+      return true;
+   }
+   return true;
 }
 
 int MarketOrderSend(string symbol, int cmd, double volume, double price, int slipagge, double stoploss, double takeprofit, string comment)
 {
    int newOrder;
    
-   newOrder = OrderSend(symbol, cmd, volume, price, slippage, 0, 0, NULL, magic);
+   newOrder = OrderSend(symbol, cmd, volume, price, slippage, stoploss, takeprofit, NULL, magic);
    if(newOrder <= 0)Alert("OrderSend Error: ", GetLastError());
-   else
-   {
-      bool res = OrderModify(newOrder,0,stoploss,takeprofit,0);
-      if(!res){
-         Alert("OrderModify Error: ", GetLastError());
-         Alert("IMPORTANT: ORDER #", newOrder, " HAS NO STOPLOSS AND TAKEPROFIT");
-      }
-   }
+   
    return(newOrder);
 }
