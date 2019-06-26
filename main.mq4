@@ -37,9 +37,12 @@ void OnTick()
    {
       Print("111111111OrdersTotal: " + OrdersTotal());
       int closeOrder = OrderSelect(1,SELECT_BY_POS,MODE_TRADES);
-      if(OrderType()==OP_SELL )
+      if(OrderType()==OP_SELL)
       {
          int closeSellStop = OrderClose(OrderTicket(),lots,Ask,10,clrRed);
+      }else if(OrderType()==OP_SELLSTOP)
+      {
+         int closeSellStop = OrderDelete(OrderTicket(),clrRed);
       }      
       Print("222222222OrdersTotal: " + OrdersTotal());
       int sellStop2 = OrderSend(NULL,OP_SELLSTOP,lots,iLow(NULL,PERIOD_D1,1)-20*_Point,10,NULL,NULL,NULL,magic,NULL,clrRed);
