@@ -14,8 +14,18 @@ input double TP = 1.2;
 bool oportunity = true;
 int slippage = 10;
 
+enum States
+{
+   Wait, //Wait for a better price before entering the market
+   Start, //Make the first trade and start operating
+   Hedge, //Hedge the position if it goes agains us
+   Finish //Send an email to me to turn off the EA in that specific pair and find a new pair
+};
+States state;
+
 int OnInit()
   {
+   state = Wait;
    return(INIT_SUCCEEDED);
   }
 void OnDeinit(const int reason)
@@ -28,7 +38,26 @@ void OnTick()
       //Price touched TP, so we stop operating that pair
       oportunity = false;
    }
-   
+   switch(state)
+   {
+      case Wait:
+      
+      
+         break;
+      case Start:
+      
+      
+         break;
+      case Hedge:
+      
+      
+         break;
+      case Finish:
+      
+      
+         break;   
+      
+   }
    if(buyInterest()==true && OrdersTotal() < 2)
    {
       //int testBuy = OrderSend(symbol,cmd,volume,price,slippage,stoploss,takeprofit,comment,magic,dateexpiration,color);
