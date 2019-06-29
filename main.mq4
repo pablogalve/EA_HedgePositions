@@ -7,21 +7,17 @@
 #property link      "https://www.mql5.com"
 #property version   "1.00"
 #property strict
+
+//Includes
+#include <states.mqh>
+
+//Variables
 input int magic = 17;
 input double lots = 0.01;
 input double SL = 20;
 input double TP = 1.2;
 bool oportunity = true;
 int slippage = 10;
-
-enum States
-{
-   Wait, //Wait for a better price before entering the market
-   Start, //Make the first trade and start operating
-   Hedge, //Hedge the position if it goes agains us
-   Finish //Send an email to me to turn off the EA in that specific pair and find a new pair
-};
-States state;
 
 int OnInit()
   {
