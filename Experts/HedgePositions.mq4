@@ -10,6 +10,7 @@
 
 //Includes
 #include <states.mqh>
+#include <entryInterest.mqh>
 
 //Variables
 input int magic = 17;
@@ -88,13 +89,7 @@ void OnTick()
          
   }
   
-bool buyInterest()
-{
-   if(iClose(NULL,PERIOD_D1,1) > iClose(NULL,PERIOD_D1,2))
-      return true;
-   else
-      return false;  
-}
+
 
 bool CheckHedge(int cmd, int entryDistance)
 {  //We check that price exists to open a hedge position
