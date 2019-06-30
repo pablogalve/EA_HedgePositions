@@ -17,7 +17,8 @@ input int magic = 17;
 input double lots = 0.01;
 input double SL = 20;
 input double TP = 1.2;
-input double startPrice = 1.137;
+input double startPrice = 1.14;
+input double hedge = 500; //distance in points (not pips) from the low to SL - Entry point for hedge
 bool oportunity = true;
 int slippage = 10;
 
@@ -40,55 +41,47 @@ void OnTick()
    {
       case Wait:
       //If price touches our start price, we start looking for an entry oportunity
-         if(iLow(NULL,PERIOD_D1,0) <= startPrice)
+         if(iLow(NULL,PERIOD_H1,0) <= startPrice)
          {
             state = Start; 
          }
                  
          break;
       case Start:
-      
-      
-      state = Hedge;      
-         break;
+         {
+            //int testBuy = OrderSend(symbol,cmd,volume,price,slippage,stoploss,takeprofit,comment,magic,dateexpiration,color);
+            int buyStop = MarketOrderSend(NULL,OP_BUYSTOP,lots,Ask+500*_Point,slippage,NULL,TP,NULL);
+            int buyPrice = OrderSelect(0,SELECT_BY_POS,MODE_TRADES);
+            
+            double low = 999999; //30 day low - Local variable
+            for(int i = 0;i < 30;i++)
+            {
+               //Calculate 7-day low to put our hedge position
+               if(iLow(NULL,PERIOD_D1,i) < low)
+               {
+                  low = iLow(NULL,PERIOD_D1,i);
+               } 
+            }
+            int sellStop = MarketOrderSend(NULL,OP_SELLSTOP,lots,low-hedge*_Point,slippage,NULL,NULL,NULL);
+            
+            //Our initial position has been set, so we now start to manage our position via hedging
+            state = Hedge;      
+            break;
+         }         
       case Hedge:
-         if(buyInterest()==true && OrdersTotal() < 2)
-   {
-      //int testBuy = OrderSend(symbol,cmd,volume,price,slippage,stoploss,takeprofit,comment,magic,dateexpiration,color);
-      int buy = MarketOrderSend(NULL,OP_BUY,lots,Ask,slippage,NULL,TP,NULL);
-      int sellStop = MarketOrderSend(NULL,OP_SELLSTOP,lots,iLow(NULL,PERIOD_D1,1)-20*_Point,slippage,NULL,NULL,NULL);
-   }else if(buyInterest()==true && OrdersTotal()==2)
-   {
-      //We close the last sell order. A buy + a sell = position with hedge. Closing a sell means closing the hedge and going long 
-      int closeOrder = OrderSelect(1,SELECT_BY_POS,MODE_TRADES);
-      if(OrderType()==OP_SELL)
-      {  //We close an opened order
-         int closeSellStop = OrderClose(OrderTicket(),lots,Ask,10,clrRed);
-      }else if(OrderType()==OP_SELLSTOP)
-      {  //We close a pending order
-         int closeSellStop = OrderDelete(OrderTicket(),clrRed);
-      }      
-      
-      //We check that sell stop order can be sent to market
-      if(iLow(NULL,PERIOD_D1,1)-50*_Point < Bid+10*_Point)
-      {
-         int sellStop2 = MarketOrderSend(NULL,OP_SELLSTOP,lots,iLow(NULL,PERIOD_D1,1)-50*_Point,slippage,NULL,NULL,NULL);
-      }else
-      {
-         int sellStop2 = MarketOrderSend(NULL,OP_SELLSTOP,lots,Bid-50*_Point,slippage,NULL,NULL,NULL);
-      }
-   } 
+            
       
          break;
       case Finish:
       
       
-         break;   
+         break; 
+      default:
+         break;  
       
    }
          
-  }
-  
+  }  
 
 
 bool CheckHedge(int cmd, int entryDistance)
@@ -112,3 +105,33 @@ int MarketOrderSend(string symbol, int cmd, double volume, double price, int sli
    
    return(newOrder);
 }
+
+
+/*
+if(buyInterest()==true && OrdersTotal() < 2)
+         {
+            //int testBuy = OrderSend(symbol,cmd,volume,price,slippage,stoploss,takeprofit,comment,magic,dateexpiration,color);
+            int buy = MarketOrderSend(NULL,OP_BUY,lots,Ask,slippage,NULL,TP,NULL);
+            int sellStop = MarketOrderSend(NULL,OP_SELLSTOP,lots,iLow(NULL,PERIOD_D1,1)-20*_Point,slippage,NULL,NULL,NULL);
+         }else if(buyInterest()==true && OrdersTotal()==2)
+         {
+            //We close the last sell order. A buy + a sell = position with hedge. Closing a sell means closing the hedge and going long 
+            int closeOrder = OrderSelect(1,SELECT_BY_POS,MODE_TRADES);
+            if(OrderType()==OP_SELL)
+            {  //We close an opened order
+               int closeSellStop = OrderClose(OrderTicket(),lots,Ask,10,clrRed);
+            }else if(OrderType()==OP_SELLSTOP)
+            {  //We close a pending order
+               int closeSellStop = OrderDelete(OrderTicket(),clrRed);
+            }      
+            
+            //We check that sell stop order can be sent to market
+            if(iLow(NULL,PERIOD_D1,1)-50*_Point < Bid+10*_Point)
+            {
+               int sellStop2 = MarketOrderSend(NULL,OP_SELLSTOP,lots,iLow(NULL,PERIOD_D1,1)-50*_Point,slippage,NULL,NULL,NULL);
+            }else
+            {
+               int sellStop2 = MarketOrderSend(NULL,OP_SELLSTOP,lots,Bid-50*_Point,slippage,NULL,NULL,NULL);
+            }
+         } 
+*/
