@@ -16,6 +16,7 @@ input int magic = 17;
 input double lots = 0.01;
 input double SL = 20;
 input double TP = 1.2;
+input double startPrice = 1.137;
 bool oportunity = true;
 int slippage = 10;
 
@@ -37,24 +38,20 @@ void OnTick()
    switch(state)
    {
       case Wait:
-      
-      
+      //If price touches our start price, we start looking for an entry oportunity
+         if(iLow(NULL,PERIOD_D1,0) <= startPrice)
+         {
+            state = Start; 
+         }
+                 
          break;
       case Start:
       
       
+      state = Hedge;      
          break;
       case Hedge:
-      
-      
-         break;
-      case Finish:
-      
-      
-         break;   
-      
-   }
-   if(buyInterest()==true && OrdersTotal() < 2)
+         if(buyInterest()==true && OrdersTotal() < 2)
    {
       //int testBuy = OrderSend(symbol,cmd,volume,price,slippage,stoploss,takeprofit,comment,magic,dateexpiration,color);
       int buy = MarketOrderSend(NULL,OP_BUY,lots,Ask,slippage,NULL,TP,NULL);
@@ -79,7 +76,16 @@ void OnTick()
       {
          int sellStop2 = MarketOrderSend(NULL,OP_SELLSTOP,lots,Bid-50*_Point,slippage,NULL,NULL,NULL);
       }
-   }         
+   } 
+      
+         break;
+      case Finish:
+      
+      
+         break;   
+      
+   }
+         
   }
   
 bool buyInterest()
