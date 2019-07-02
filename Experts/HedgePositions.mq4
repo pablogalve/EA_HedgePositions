@@ -11,6 +11,7 @@
 //Includes
 #include <states.mqh>
 #include <entryInterest.mqh>
+#include <trailingPrice.mqh>
 
 //Variables
 input int magic = 17;
@@ -21,6 +22,10 @@ input double startPrice = 1.14;
 input double hedge = 500; //distance in points (not pips) from the low to SL - Entry point for hedge
 bool oportunity = true;
 int slippage = 10;
+
+//state = Hedge
+double reOpenPrice = 0;
+double distance = 500*_Point;
 
 int OnInit()
   {
@@ -69,7 +74,29 @@ void OnTick()
             break;
          }         
       case Hedge:
+      reOpenPrice = trailingPrice("buy", reOpenPrice, distance);
+      
+         if(Ask >= reOpenPrice  && OrdersTotal()==2)
+         {
+            //We close the last sell order. A buy + a sell = position with hedge. Closing a sell means closing the hedge and going long 
+            int closeOrder = OrderSelect(1,SELECT_BY_POS,MODE_TRADES);
+            if(OrderType()==OP_SELL)
+            {  //We close an opened order
+               int closeSellStop = OrderClose(OrderTicket(),lots,Ask,10,clrRed);
+            }else if(OrderType()==OP_SELLSTOP)
+            {  //We close a pending order
+               int closeSellStop = OrderDelete(OrderTicket(),clrRed);
+            }      
             
+            //We check that sell stop order can be sent to market
+            if(iLow(NULL,PERIOD_D1,1)-50*_Point < Bid+10*_Point)
+            {
+               int sellStop2 = MarketOrderSend(NULL,OP_SELLSTOP,lots,iLow(NULL,PERIOD_D1,1)-50*_Point,slippage,NULL,NULL,NULL);
+            }else
+            {
+               int sellStop2 = MarketOrderSend(NULL,OP_SELLSTOP,lots,Bid-50*_Point,slippage,NULL,NULL,NULL);
+            }
+         }   
       
          break;
       case Finish:
