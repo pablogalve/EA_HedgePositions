@@ -12,6 +12,7 @@
 #include <states.mqh>
 #include <entryInterest.mqh>
 #include <trailingPrice.mqh>
+#include <getLowMax.mqh>
 
 //Variables
 input int magic = 17;
@@ -70,10 +71,10 @@ void OnTick()
             int sellStop = MarketOrderSend(NULL,OP_SELLSTOP,lots,low-hedge*_Point,slippage,NULL,NULL,NULL);
             
             //Our initial position has been set, so we now start to manage our position via hedging
-            state = Hedge;      
+            state = OpenHedge;      
             break;
          }         
-      case Hedge:
+      case OpenHedge:
       reOpenPrice = trailingPrice("buy", reOpenPrice, distance);
       
          if(Ask >= reOpenPrice  && OrdersTotal()==2)
@@ -97,7 +98,10 @@ void OnTick()
                int sellStop2 = MarketOrderSend(NULL,OP_SELLSTOP,lots,Bid-50*_Point,slippage,NULL,NULL,NULL);
             }
          }   
-      
+         state = CloseHedge;
+         break;
+      case CloseHedge:
+         
          break;
       case Finish:
       
