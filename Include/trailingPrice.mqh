@@ -8,14 +8,14 @@
 #property strict
 
 double trailingPrice(string type, double trailingPrice, double distance)
-{   
+{  
    if(type == "buy")
    {
       if(Ask + distance > trailingPrice)
          return trailingPrice; //Price has increased, so we return the same value
       else if(Ask + distance <= trailingPrice)
          return Ask + distance; //Price has decreased, so we lower our trailing price
-      else if(trailingPrice = 0)
+      else if(trailingPrice == 0)
          return Ask; //If trailingPrice is not set 
    }
    else if(type == "sell")
