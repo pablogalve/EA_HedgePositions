@@ -20,13 +20,15 @@ input double lots = 0.01;
 input double SL = 20;
 input double TP = 1.2;
 input double startPrice = 1.14;
-input double hedge = 500; //distance in points (not pips) from the low to SL - Entry point for hedge
-//bool oportunity = true;
+
+bool oportunity = true;
 int slippage = 10;
 
 //state = Hedge
-double reOpenPrice = 0;
-double distance = 500*_Point;
+input double hedgeDistance = 500; //distance in points (not pips) from the low to SL - Entry point for hedge
+input double reOpenDistance = 500;
+double reOpenPrice = 0; //Price at which we will re-enter the market
+
 
 int OnInit()
   {
@@ -37,16 +39,23 @@ void OnDeinit(const int reason)
   }
 void OnTick()
   {
-   
-   if(buyInterest()==true)
+   if(iHigh(NULL,PERIOD_W1,0) >= TP)
    {
-      int buy = OrderSend(Symbol(),OP_BUY,0.01,Ask,10,NULL,NULL,NULL,magic,0,clrGreen);
-   }else
-   {
-      //int sell = OrderSend(Symbol(),OP_SELL,0.01,Bid,10,NULL,NULL,NULL,magic,0,clrRed);
+      //Price touched TP, so we stop operating that pair
+      oportunity = false;
    }
    
-         
+   reOpenPrice = trailingPrice("down",reOpenPrice,reOpenDistance);
+   
+   
+   if(buyInterest() == true || Ask == reOpenPrice)
+   {
+      int buy = OrderSend(Symbol(),OP_BUY,0.01,Ask,10,NULL,NULL,NULL,magic,0,clrGreen);
+      reOpenPrice = Ask - hedgeDistance;
+   }else if(sellInterest() == true)
+   {
+      int sell = OrderSend(Symbol(),OP_SELL,0.01,Bid,10,NULL,NULL,NULL,magic,0,clrRed);
+   }  
   }  
 
 
@@ -71,10 +80,3 @@ int MarketOrderSend(string symbol, int cmd, double volume, double price, int sli
    
    return(newOrder);
 }
-
-/*if(iHigh(NULL,PERIOD_W1,0) >= TP)
-   {
-      //Price touched TP, so we stop operating that pair
-      oportunity = false;
-   }
-   */
