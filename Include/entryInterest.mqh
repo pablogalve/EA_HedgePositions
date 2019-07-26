@@ -8,10 +8,11 @@
 #property strict
 
 bool buyInterest()
-{
-   double minDist = 500*_Point;
+{   
    double mechaSize;
    double mechaD1MinPips = 400*_Point;
+   double envolventeMinPips = 300*_Point;
+   double envolventeSize;
  
    //Hammer with open >= close //Martillo
    if(iOpen(NULL,PERIOD_D1,1) >= iClose(NULL,PERIOD_D1,1))
@@ -30,7 +31,8 @@ bool buyInterest()
          }         
       }
    //Hammer with close > Open //Martillo
-   }else if(iOpen(NULL,PERIOD_D1,1) < iClose(NULL,PERIOD_D1,1))
+   }
+   if(iOpen(NULL,PERIOD_D1,1) < iClose(NULL,PERIOD_D1,1))
    {
       if((iOpen(NULL,PERIOD_D1,1)-iLow(NULL,PERIOD_D1,1)) >= mechaD1MinPips)
       {
@@ -45,5 +47,18 @@ bool buyInterest()
          } 
       }
    }
+   if(iOpen(NULL,PERIOD_D1,2) > (iClose(NULL,PERIOD_D1,2) + envolventeMinPips))
+   {
+      if(iClose(NULL,PERIOD_D1,1) > iClose(NULL,PERIOD_D1,2))
+      {
+         envolventeSize = iOpen(NULL,PERIOD_D1,2) - iClose(NULL,PERIOD_D1,2);
+         if((iClose(NULL,PERIOD_D1,1) - iOpen(NULL,PERIOD_D1,1)) > 0.75*(envolventeSize))
+         {
+            if((iClose(NULL,PERIOD_D1,1) - iOpen(NULL,PERIOD_D1,1)) < 1.25 *(envolventeSize))
+            {
+               return true;
+            }
+         }
+      }
+   }
    return false;
-}
