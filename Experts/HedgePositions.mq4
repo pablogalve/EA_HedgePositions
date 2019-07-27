@@ -17,6 +17,7 @@
 
 //Variables
 input int magic = 17;
+input int magicHedge = 18;
 input double lots = 0.01;
 input double SL = 20;
 input double TP = 1.2;
@@ -26,14 +27,15 @@ bool oportunity = true;
 int slippage = 10;
 
 //state = Hedge
-input double hedgeDistance = 500; //distance in points (not pips) from the low to SL - Entry point for hedge
-input double reOpenDistance = 500;
+input double hedgeDistance = 800; //distance in points (not pips) from the low to SL - Entry point for hedge
+input double reOpenDistance = 800;
 double reOpenPrice = 0; //Price at which we will re-enter the market
 double hedgePrice = 0; //Price at which we open our hedge to cover from losses
 
 
 int OnInit()
   {
+   state = Wait;
    return(INIT_SUCCEEDED);
   }
 void OnDeinit(const int reason)
@@ -47,19 +49,54 @@ void OnTick()
       oportunity = false;
    }
    
-   //
-   reOpenPrice = trailingPrice("down",reOpenPrice,reOpenDistance);
-   hedgePrice = trailingPrice("up",hedgePrice,hedgeDistance);
+   switch(state)
+   {
+      case Wait:
+      //If price touches our start price, we start looking for an entry oportunity
+         if(iLow(NULL,PERIOD_H1,0) <= startPrice)
+         {
+            state = First_Entry;
+            reOpenPrice = trailingPrice("down",reOpenPrice,reOpenDistance);
+            hedgePrice = trailingPrice("up",hedgePrice,hedgeDistance);   
+         }
+      break;
+      case First_Entry:
+         if(buyOportunity(buyInterest()) == true || Ask >= reOpenPrice)
+         {
+            int buy = OrderSend(Symbol(),OP_BUY,0.01,Ask,10,NULL,NULL,NULL,magic,0,clrGreen);
+            reOpenPrice = trailingPrice("down",0,reOpenDistance);
+            state=Open_Hedge;
+         }   
+      break;
+      case Open_Hedge:
+         //We constantly check our re-entry pices
+         reOpenPrice = trailingPrice("down",reOpenPrice,reOpenDistance);
+         hedgePrice = trailingPrice("up",hedgePrice,hedgeDistance); 
+         if(sellOportunity(sellInterest()) == true || Bid <= hedgePrice)
+         {
+            int sell = OrderSend(Symbol(),OP_SELL,0.01,Bid,10,NULL,NULL,NULL,magicHedge,0,clrRed);
+            hedgePrice = trailingPrice("up",0,hedgeDistance);
+            state = Close_Hedge;
+         }    
+      break;
+      case Close_Hedge:
+         //We constantly check our re-entry pices
+         reOpenPrice = trailingPrice("down",reOpenPrice,reOpenDistance);
+         hedgePrice = trailingPrice("up",hedgePrice,hedgeDistance); 
+         if(buyOportunity(buyInterest()) == true || Ask >= reOpenPrice)
+         {
+            CloseOrders(magicHedge);
+            reOpenPrice = trailingPrice("down",0,reOpenDistance);
+            state=Open_Hedge;
+         }   
+      break;
+      case Finish:
+         
+      break;
+   }      
       
-   if(buyOportunity(buyInterest()) == true || Ask >= reOpenPrice)
-   {
-      int buy = OrderSend(Symbol(),OP_BUY,0.01,Ask,10,NULL,NULL,NULL,magic,0,clrGreen);
-      reOpenPrice = 0;
-   }
-   if(sellInterest() == true || Bid >= 99999999999)
-   {
-      int sell = OrderSend(Symbol(),OP_SELL,0.01,Bid,10,NULL,NULL,NULL,magic,0,clrRed);
-   }  
+   
+   
   }  
 
 
