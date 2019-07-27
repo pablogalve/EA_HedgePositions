@@ -84,3 +84,23 @@ int MarketOrderSend(string symbol, int cmd, double volume, double price, int sli
    
    return(newOrder);
 }
+
+void CloseOrders(int magic)
+{
+   for(int i = OrdersTotal()-1;i>=0;i--)
+   {
+      OrderSelect(i,SELECT_BY_POS,MODE_TRADES);
+      if(OrderMagicNumber() == magic)
+      {
+         if(OrderType() == OP_BUY)
+         {
+            OrderClose(OrderTicket(),OrderLots(),MarketInfo(OrderSymbol(),MODE_BID),slippage);
+         }
+         if(OrderType() == OP_SELL)
+         {
+            OrderClose(OrderTicket(),OrderLots(),MarketInfo(OrderSymbol(),MODE_ASK),slippage);
+         }
+         
+      }
+   }
+}
