@@ -13,6 +13,7 @@
 #include <entryInterest.mqh>
 #include <trailingPrice.mqh>
 #include <getLowMax.mqh>
+#include <entryOportunity.mqh>
 
 //Variables
 input int magic = 17;
@@ -50,11 +51,12 @@ void OnTick()
    reOpenPrice = trailingPrice("down",reOpenPrice,reOpenDistance);
    hedgePrice = trailingPrice("up",hedgePrice,hedgeDistance);
       
-   if(buyInterest() == true || Ask >= reOpenPrice)
+   if(buyOportunity(buyInterest()) == true || Ask >= reOpenPrice)
    {
       int buy = OrderSend(Symbol(),OP_BUY,0.01,Ask,10,NULL,NULL,NULL,magic,0,clrGreen);
       reOpenPrice = 0;
-   }else if(sellInterest() == true || Bid >= reOpenPrice)
+   }
+   if(sellInterest() == true || Bid >= 99999999999)
    {
       int sell = OrderSend(Symbol(),OP_SELL,0.01,Bid,10,NULL,NULL,NULL,magic,0,clrRed);
    }  
