@@ -28,6 +28,7 @@ int slippage = 10;
 input double hedgeDistance = 500; //distance in points (not pips) from the low to SL - Entry point for hedge
 input double reOpenDistance = 500;
 double reOpenPrice = 0; //Price at which we will re-enter the market
+double hedgePrice = 0; //Price at which we open our hedge to cover from losses
 
 
 int OnInit()
@@ -45,14 +46,15 @@ void OnTick()
       oportunity = false;
    }
    
+   //
    reOpenPrice = trailingPrice("down",reOpenPrice,reOpenDistance);
-   
-   
-   if(buyInterest() == true || Ask == reOpenPrice)
+   hedgePrice = trailingPrice("up",hedgePrice,hedgeDistance);
+      
+   if(buyInterest() == true || Ask >= reOpenPrice)
    {
       int buy = OrderSend(Symbol(),OP_BUY,0.01,Ask,10,NULL,NULL,NULL,magic,0,clrGreen);
-      reOpenPrice = Ask - hedgeDistance;
-   }else if(sellInterest() == true)
+      reOpenPrice = 0;
+   }else if(sellInterest() == true || Bid >= reOpenPrice)
    {
       int sell = OrderSend(Symbol(),OP_SELL,0.01,Bid,10,NULL,NULL,NULL,magic,0,clrRed);
    }  
