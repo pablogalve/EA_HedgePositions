@@ -39,7 +39,7 @@ bool sellOportunity(bool sellInterest)
    bool priceAtMax = false;
 
    //We check that our sellInterest is at a 30-day high or 20pips lower    
-   if(getHigh("D1",30) >= iHigh(NULL,PERIOD_D1,1) - 200*_Point)
+   if(getHigh("D1",30) <= iHigh(NULL,PERIOD_D1,1) + 200*_Point)
       priceAtMax = true;
       
    if(sellInterest==true && priceAtMax == true)

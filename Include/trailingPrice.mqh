@@ -9,6 +9,7 @@
 
 double trailingPrice(string type, double trailingPrice, double distance)
 {  
+   distance = distance * _Point;
    if(type == "up")
    {
       if(trailingPrice == 0)
