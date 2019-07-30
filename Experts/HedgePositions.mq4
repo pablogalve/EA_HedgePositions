@@ -14,14 +14,14 @@
 #include <trailingPrice.mqh>
 #include <getLowMax.mqh>
 #include <entryOportunity.mqh>
+#include <checkTakeProfit.mqh>
 
 //Variables
-input int magic = 17;
-input int magicHedge = 18;
+int magic = 17;
+int magicHedge = 18;
 input double lots = 0.01;
-input double SL = 20;
-input double TP = 0.69;
-input double startPrice = 0.635;
+input double TP = 1.17;
+input double startPrice = 1.155;
 double firstEntryPrice;
 
 bool oportunity = true;
@@ -44,7 +44,7 @@ void OnDeinit(const int reason)
   }
 void OnTick()
   {
-   if(iHigh(NULL,PERIOD_W1,0) >= TP)
+   if(iHigh(NULL,PERIOD_W1,0) >= TP || iHigh(NULL,PERIOD_D1,1) >= TP)
    {
       //Price touched TP, so we stop operating that pair
       state = Finish;      
@@ -56,15 +56,15 @@ void OnTick()
       //If price touches our start price, we start looking for an entry oportunity
          if(iLow(NULL,PERIOD_D1,0) <= startPrice)
          {
-            state = First_Entry;
-            reOpenPrice = trailingPrice("down",reOpenPrice,reOpenDistance);
-            hedgePrice = trailingPrice("up",hedgePrice,hedgeDistance);   
+            reOpenPrice = trailingPrice("down",0,reOpenDistance);
+            state = First_Entry;            
          }
       break;
       case First_Entry:
+         reOpenPrice = trailingPrice("down",reOpenPrice,reOpenDistance);
          if(buyOportunity(buyInterest()) == true || Ask >= reOpenPrice)
-         {
-            int buy = OrderSend(Symbol(),OP_BUY,0.1,Ask,10,NULL,NULL,NULL,magic,0,clrGreen);
+         {            
+            MarketOrderSend(Symbol(),OP_BUY,lots,Ask,10,NULL,NULL,NULL,magic,0,clrGreen);
             reOpenPrice = trailingPrice("down",0,reOpenDistance);
             state=Open_Hedge;
          }   
@@ -74,6 +74,9 @@ void OnTick()
          reOpenPrice = trailingPrice("down",reOpenPrice,reOpenDistance);
          hedgePrice = trailingPrice("up",hedgePrice,hedgeDistance); 
          
+         if(checkTakeProfit(TP,"buy")==true)
+            state = Finish;   
+            
          for(int i = OrdersTotal()-1;i>=0;i--)
          {
             OrderSelect(i,SELECT_BY_POS,MODE_TRADES);
@@ -84,9 +87,9 @@ void OnTick()
          }  
          if(Bid > firstEntryPrice + 500*_Point)
          {
-            if(sellOportunity(sellInterest()) == true || Bid <= hedgePrice-500*_Point)
+            if(sellOportunity(sellInterest()) == true || Bid <= hedgePrice)
             {
-               int sell = OrderSend(Symbol(),OP_SELL,0.1,Bid,10,NULL,NULL,NULL,magicHedge,0,clrRed);
+               CloseOrders(magic);
                hedgePrice = trailingPrice("up",0,hedgeDistance);
                state = Close_Hedge;
             } 
@@ -95,26 +98,31 @@ void OnTick()
          {
             if(sellOportunity(sellInterest()) == true || Bid <= hedgePrice)
             {
-               int sell = OrderSend(Symbol(),OP_SELL,0.1,Bid,10,NULL,NULL,NULL,magicHedge,0,clrRed);
+               CloseOrders(magic);
                hedgePrice = trailingPrice("up",0,hedgeDistance);
                state = Close_Hedge;
             } 
          }
+         
           
       break;
       case Close_Hedge:
+         if(checkTakeProfit(TP,"buy")==true)
+            state = Finish;   
+            
          //We constantly check our re-entry pices
          reOpenPrice = trailingPrice("down",reOpenPrice,reOpenDistance);
          hedgePrice = trailingPrice("up",hedgePrice,hedgeDistance); 
          if(buyOportunity(buyInterest()) == true || Ask >= reOpenPrice)
          {
-            CloseOrders(magicHedge);
+            MarketOrderSend(Symbol(),OP_BUY,lots,Ask,10,NULL,NULL,NULL,magic,0,clrGreen);
             reOpenPrice = trailingPrice("down",0,reOpenDistance);
             state=Open_Hedge;
-         }   
+         }
+         
       break;
       case Finish:
-         CloseOrders(magic);
+         CloseOrders(magic);         
          CloseOrders(magicHedge);
          oportunity = false;
       break;
@@ -137,32 +145,37 @@ bool CheckHedge(int cmd, int entryDistance)
    return true;
 }
 
-int MarketOrderSend(string symbol, int cmd, double volume, double price, int slipagge, double stoploss, double takeprofit, string comment)
+int MarketOrderSend(string symbol, int cmd, double volume, double price, int slipagge, double stoploss, double takeprofit, string comment, int magicN, datetime date, color colour)
 {
    int newOrder;
    
-   newOrder = OrderSend(symbol, cmd, volume, price, slippage, stoploss, takeprofit, NULL, magic);
+   newOrder = OrderSend(symbol, cmd, volume, price, slippage, stoploss, takeprofit, NULL, magicN, date, colour);
    if(newOrder <= 0)Alert("OrderSend Error: ", GetLastError());
    
    return(newOrder);
 }
 
-void CloseOrders(int magic)
+void CloseOrders(int magicN)
 {
    for(int i = OrdersTotal()-1;i>=0;i--)
    {
+      
       OrderSelect(i,SELECT_BY_POS,MODE_TRADES);
-      if(OrderMagicNumber() == magic)
+      Print("Magic: " , OrderMagicNumber());
+      if(OrderMagicNumber() == magicN)
       {
+         Print("2");
          if(OrderType() == OP_BUY)
          {
+            Print("3");
             OrderClose(OrderTicket(),OrderLots(),MarketInfo(OrderSymbol(),MODE_BID),slippage);
          }
          if(OrderType() == OP_SELL)
          {
             OrderClose(OrderTicket(),OrderLots(),MarketInfo(OrderSymbol(),MODE_ASK),slippage);
-         }
-         
+         }         
+      }else{
+         Print("OrderMagicNumber Error: " , GetLastError());
       }
    }
 }

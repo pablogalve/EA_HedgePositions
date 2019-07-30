@@ -9,12 +9,15 @@
 
 #include <getLowMax.mqh>
 
+input int buyDays = 30;
+input int sellDays = 30;
+
 bool buyOportunity(bool buyInterest)
 {
    bool priceAtMin = false;
 
    //We check that our buyInterest is at a 7-day low or 20pips higher    
-   if(getLow("D1",30) >= iLow(NULL,PERIOD_D1,1) - 200*_Point)
+   if(getLow("D1",buyDays) >= iLow(NULL,PERIOD_D1,1) - 200*_Point)
       priceAtMin = true;
    
    //We only buy if we have buyInterest and price is at a relative low
@@ -39,7 +42,7 @@ bool sellOportunity(bool sellInterest)
    bool priceAtMax = false;
 
    //We check that our sellInterest is at a 30-day high or 20pips lower    
-   if(getHigh("D1",30) <= iHigh(NULL,PERIOD_D1,1) + 200*_Point)
+   if(getHigh("D1",sellDays) <= iHigh(NULL,PERIOD_D1,1) + 200*_Point)
       priceAtMax = true;
       
    if(sellInterest==true && priceAtMax == true)
