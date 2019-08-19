@@ -10,8 +10,10 @@ Finally, you just have to wait. You can sleep or do whatever you want, as the EA
 
 ## EA's logic
 Our goal is to reduce drawdown as much as possible while we wait for the price to touch our target. 
+
 If your analysis is wrong, you will lose. But in any case, this EA is expected to reduce your drawdown and improve your profit factor.
-The EA doesn't setup visible stop loss and take profit, but that doesn't mean that we are exposed to a lot of risk as the EA will close both losing positions (and try to open it again later at a better price) and winning positions with risk of retracing. So, you are always protected in the same way as if you were using a stop loss.
+
+The EA doesn't setup visible stop losses and take profits, but that doesn't mean that we are exposed to a lot of risk as the EA will close both losing positions (and try to open it again later at a better price) and winning positions with risk of retracing. So, you are always protected in the same way as if you were using a stop loss.
 
 EA will be using candles patterns as well as trailing price colliders to determine if it's time to open or close a position. 
 Candle patterns example:
@@ -21,3 +23,20 @@ Candle patterns example:
   <img src="Screenshots/morning_star.png" width="300" title="Candles"> 
 </p>
 
+## Backtest Example:
+We'll take EURNOK as an example.
+On 30/01/2019 we think that the price will go to 10.00000, so we setup the EA to start trading if the price drops to 9.65.
+* startPrice = 9.65 //Price at which the EA starts trading
+* TP = 10 //Take profit, our target
+* hedgeDistance = 9000 //Price in points at which we close a position with a loss
+* reOpenDistance = 10000 //Price in points at which we re-open a position that was closed with a loss before
+
+This is the data history of EURNOK price:
+<p align="left">
+  <img src="Screenshots/history_EURNOK.png" width="1000" title="History">  
+</p>
+
+This is the result we get using our EA
+<p align="left">
+  <img src="Screenshots/backtest_graph_EURNOK.png" width="1000" title="Backtest">  
+</p>
