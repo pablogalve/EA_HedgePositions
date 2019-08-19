@@ -23,7 +23,7 @@ Candle patterns example:
   <img src="Screenshots/morning_star.png" width="300" title="Candles"> 
 </p>
 
-## Backtest Example:
+## Winning Backtest Example:
 We'll take EURNOK as an example.
 On 30/01/2019 we think that the price will go to 10.00000, so we setup the EA to start trading if the price drops to 9.65.
 * startPrice = 9.65 //Price at which the EA starts trading
@@ -33,10 +33,45 @@ On 30/01/2019 we think that the price will go to 10.00000, so we setup the EA to
 
 This is the data history of EURNOK price:
 <p align="left">
-  <img src="Screenshots/history_EURNOK.png" width="1000" title="History">  
+  <img src="Screenshots/history_EURNOK.PNG" width="1000" title="History">  
 </p>
 
 This is the result we get using our EA
 <p align="left">
-  <img src="Screenshots/backtest_graph_EURNOK.png" width="1000" title="Backtest">  
+  <img src="Screenshots/backtest_graph_EURNOK.PNG" width="1000" title="Backtest">  
 </p>
+
+## Losing Backtest Example:
+If we made an analysis of NZDCHF and thought that the price would go from 0.66 to 0.71, we would have been wrong.
+
+If we buy 0.1 lots of NZDCHF at 0.66 and sell it at 0.62 with a 10.000€ account, we would have lost -400€ (-4%).
+
+However, using that EA you would have lost only -72.55€ (-0.73%).
+
+Our parameters:
+* startPrice = 0.66
+* TP = 0.71
+* hedgeDistance = 900
+* reOpenDistance = 900
+
+This is the data history of EURNOK price:
+<p align="left">
+  <img src="Screenshots/history_NZDCHF.PNG" width="1000" title="History">  
+</p>
+
+This is the result we get using our EA
+<p align="left">
+  <img src="Screenshots/backtest_graph_NZDCHF.PNG" width="1000" title="Backtest">  
+</p>
+
+## Conclusion
+Using that EA and the correct parameters, you earn the same when things go well and you lose less when things go bad.
+
+That way you can create a better statistical expectancy to get better results.
+
+However, results depend exclusively on your own analysis.
+
+## Disclaimer
+This code is disclosed publicly for educational purposes only.
+Use at your own risk. 
+I'm not responsible for any financial loss or damage caused by the use of this software.
