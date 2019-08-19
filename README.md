@@ -31,14 +31,18 @@ On 30/01/2019 we think that the price will go to 10.00000, so we setup the EA to
 * hedgeDistance = 9000 //Price in points at which we close a position with a loss
 * reOpenDistance = 10000 //Price in points at which we re-open a position that was closed with a loss before
 
+If we buy 0.1 lots of EURNOK at 9.65 and sell it at 10 with a 10.000€ account, we would have earned 350€ (+3.5%).
+
+However, using that EA you would have earned 545.91€ (+5.46%).
+
 This is the data history of EURNOK price:
 <p align="left">
-  <img src="Screenshots/history_EURNOK.PNG" width="1000" title="History">  
+  <img src="Screenshots/history_EURNOK.PNG" width="600" title="History">  
 </p>
 
-This is the result we get using our EA
+This is the result we get using our EA:
 <p align="left">
-  <img src="Screenshots/backtest_graph_EURNOK.PNG" width="1000" title="Backtest">  
+  <img src="Screenshots/backtest_graph_EURNOK.PNG" width="600" title="Backtest">  
 </p>
 
 ## Losing Backtest Example:
@@ -54,14 +58,14 @@ Our parameters:
 * hedgeDistance = 900
 * reOpenDistance = 900
 
-This is the data history of EURNOK price:
+This is the data history of NZDCHF price:
 <p align="left">
-  <img src="Screenshots/history_NZDCHF.PNG" width="1000" title="History">  
+  <img src="Screenshots/history_NZDCHF.PNG" width="600" title="History">  
 </p>
 
-This is the result we get using our EA
+This is the result we get using our EA:
 <p align="left">
-  <img src="Screenshots/backtest_graph_NZDCHF.PNG" width="1000" title="Backtest">  
+  <img src="Screenshots/backtest_graph_NZDCHF.PNG" width="600" title="Backtest">  
 </p>
 
 ## Conclusion
