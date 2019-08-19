@@ -43,6 +43,13 @@ This is the result we get using our EA
 
 
 
+## Conclusion
+Using that EA and the correct parameters, you earn the same when things go well and you lose less when things go bad.
+
+That way you can create a better statistical expectancy to get better results.
+
+However, results depend exclusively on your own analysis.
+
 ## Disclaimer
 This code is disclosed publicly for educational purposes only.
 Use at your own risk. 
