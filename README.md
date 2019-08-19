@@ -23,7 +23,7 @@ Candle patterns example:
   <img src="Screenshots/morning_star.png" width="300" title="Candles"> 
 </p>
 
-## Backtest Example:
+## Winning Backtest Example:
 We'll take EURNOK as an example.
 On 30/01/2019 we think that the price will go to 10.00000, so we setup the EA to start trading if the price drops to 9.65.
 * startPrice = 9.65 //Price at which the EA starts trading
@@ -33,10 +33,17 @@ On 30/01/2019 we think that the price will go to 10.00000, so we setup the EA to
 
 This is the data history of EURNOK price:
 <p align="left">
-  <img src="Screenshots/history_EURNOK.png" width="1000" title="History">  
+  <img src="Screenshots/history_EURNOK.PNG" width="1000" title="History">  
 </p>
 
 This is the result we get using our EA
 <p align="left">
-  <img src="Screenshots/backtest_graph_EURNOK.png" width="1000" title="Backtest">  
+  <img src="Screenshots/backtest_graph_EURNOK.PNG" width="1000" title="Backtest">  
 </p>
+
+
+
+## Disclaimer
+This code is disclosed publicly for educational purposes only.
+Use at your own risk. 
+I'm not responsible for any financial loss or damage caused by the use of this software.
