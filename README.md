@@ -33,7 +33,7 @@ On 30/01/2019 we think that the price will go to 10.00000, so we setup the EA to
 
 If we buy 0.1 lots of EURNOK at 9.65 and sell it at 10 with a 10.000€ account, we would have earned 350€ (+3.5%).
 
-However, using that EA you would have earned 545.91€ (+5.46%).
+However, using our EA you would have earned 545.91€ (+5.46%).
 
 This is the data history of EURNOK price:
 <p align="left">
@@ -50,7 +50,7 @@ If we made an analysis of NZDCHF and thought that the price would go from 0.66 t
 
 If we buy 0.1 lots of NZDCHF at 0.66 and sell it at 0.62 with a 10.000€ account, we would have lost -400€ (-4%).
 
-However, using that EA you would have lost only -72.55€ (-0.73%).
+However, using our EA you would have lost only -72.55€ (-0.73%).
 
 Our parameters:
 * startPrice = 0.66
@@ -69,7 +69,7 @@ This is the result we get using our EA:
 </p>
 
 ## Conclusion
-Using that EA and the correct parameters, you earn the same when things go well and you lose less when things go bad.
+Using our EA and the correct parameters, you earn the same when things go well and you lose less when things go bad.
 
 That way you can create a better statistical expectancy to get better results.
 
