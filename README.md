@@ -16,8 +16,8 @@ The EA doesn't setup visible stop loss and take profit, but that doesn't mean th
 EA will be using candles patterns as well as trailing price colliders to determine if it's time to open or close a position. 
 Candle patterns example:
 <p align="left">
-  <img src="Screenshots/spike_candle.PNG" width="1000" title="Candles">  
-  <img src="Screenshots/reversal_candle.PNG" width="1000" title="Candles"> 
-  <img src="Screenshots/morning_star.PNG" width="1000" title="Candles"> 
+  <img src="Screenshots/spike_candle.png" width="120" title="Candles">  
+  <img src="Screenshots/reversal_candle.png" width="200" title="Candles"> 
+  <img src="Screenshots/morning_star.png" width="300" title="Candles"> 
 </p>
 
