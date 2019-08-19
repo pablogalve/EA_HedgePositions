@@ -41,7 +41,28 @@ This is the result we get using our EA
   <img src="Screenshots/backtest_graph_EURNOK.PNG" width="1000" title="Backtest">  
 </p>
 
+## Losing Backtest Example:
+If we made an analysis of NZDCHF and thought that the price would go from 0.66 to 0.71, we would have been wrong.
 
+If we buy 0.1 lots of NZDCHF at 0.66 and sell it at 0.62 with a 10.000€ account, we would have lost -400€ (-4%).
+
+However, using that EA you would have lost only -72.55€ (-0.73%).
+
+Our parameters:
+* startPrice = 0.66
+* TP = 0.71
+* hedgeDistance = 900
+* reOpenDistance = 900
+
+This is the data history of EURNOK price:
+<p align="left">
+  <img src="Screenshots/history_NZDCHF.PNG" width="1000" title="History">  
+</p>
+
+This is the result we get using our EA
+<p align="left">
+  <img src="Screenshots/backtest_graph_NZDCHF.PNG" width="1000" title="Backtest">  
+</p>
 
 ## Conclusion
 Using that EA and the correct parameters, you earn the same when things go well and you lose less when things go bad.
