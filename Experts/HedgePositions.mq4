@@ -125,12 +125,13 @@ void OnTick()
          CloseOrders(magic);         
          CloseOrders(magicHedge);
          oportunity = false;
+         SendMail("Finish","Your pair has touched take profit");
       break;
-   }      
-      
-   bool email = SendMail("subject","text");
-   
-  }  
+      default:
+         SendMail("Error","Switch state got to default, but that should never happen");
+         break;
+   } //end of switch
+  } //end of OnTick()
 
 
 int MarketOrderSend(string symbol, int cmd, double volume, double price, int slipagge, double stoploss, double takeprofit, string comment, int magicN, datetime date, color colour)
