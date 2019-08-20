@@ -45,6 +45,11 @@ This is the result we get using our EA:
   <img src="Screenshots/backtest_graph_EURNOK.PNG" width="600" title="Backtest">  
 </p>
 
+Difference between buy & hold and using our EA:
+<p align="left">
+  <img src="Screenshots/comparison_EURNOK.PNG" width="600" title="Comparison">  
+</p>
+
 ## Losing Backtest Example:
 If we made an analysis of NZDCHF and thought that the price would go from 0.66 to 0.71, we would have been wrong.
 
@@ -66,6 +71,11 @@ This is the data history of NZDCHF price:
 This is the result we get using our EA:
 <p align="left">
   <img src="Screenshots/backtest_graph_NZDCHF.PNG" width="600" title="Backtest">  
+</p>
+
+Difference between buy & hold and using our EA:
+<p align="left">
+  <img src="Screenshots/comparison_NZDCHF.PNG" width="600" title="Comparison">  
 </p>
 
 ## Conclusion
