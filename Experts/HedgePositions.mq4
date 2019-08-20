@@ -133,18 +133,6 @@ void OnTick()
   }  
 
 
-bool CheckHedge(int cmd, int entryDistance)
-{  //We check that price exists to open a hedge position
-   if(cmd == OP_SELLSTOP)
-   {
-      return true;
-   }else if(cmd == OP_BUYSTOP)
-   {
-      return true;
-   }
-   return true;
-}
-
 int MarketOrderSend(string symbol, int cmd, double volume, double price, int slipagge, double stoploss, double takeprofit, string comment, int magicN, datetime date, color colour)
 {
    int newOrder;
