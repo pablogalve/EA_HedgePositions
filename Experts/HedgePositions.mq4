@@ -15,6 +15,7 @@
 #include <getLowMax.mqh>
 #include <entryOportunity.mqh>
 #include <checkTakeProfit.mqh>
+#include <UpDown.mqh>
 
 //Variables
 int magic = 17;
@@ -23,6 +24,7 @@ input double lots = 0.01;
 input double TP = 1.17;
 input double startPrice = 1.155;
 double firstEntryPrice;
+bool UpDown;
 
 bool oportunity = true;
 int slippage = 10;
@@ -37,6 +39,7 @@ double hedgePrice = 0; //Price at which we open our hedge to cover from losses
 int OnInit()
   {
    state = Wait;
+   UpDown = UpDown(startPrice, TP);
    return(INIT_SUCCEEDED);
   }
 void OnDeinit(const int reason)
@@ -49,9 +52,10 @@ void OnTick()
       //Price touched TP, so we stop operating that pair
       state = Finish;      
    }
-   
-   switch(state)
+   if(UpDown == 1) //Long position
    {
+      switch(state)
+      {
       case Wait:
       //If price touches our start price, we start looking for an entry oportunity
          if(iLow(NULL,PERIOD_D1,0) <= startPrice)
@@ -103,7 +107,6 @@ void OnTick()
                state = Close_Hedge;
             } 
          }
-         
           
       break;
       case Close_Hedge:
@@ -131,6 +134,91 @@ void OnTick()
          SendMail("Error","Switch state got to default, but that should never happen");
          break;
    } //end of switch
+   
+   
+   }else if(UpDown == 0) //Short position
+   {
+      switch(state)
+      {
+      case Wait:
+      //If price touches our start price, we start looking for an entry oportunity
+         if(iHigh(NULL,PERIOD_D1,0) >= startPrice)
+         {
+            reOpenPrice = trailingPrice("up",0,reOpenDistance);
+            state = First_Entry;            
+         }
+      break;
+      case First_Entry:
+         reOpenPrice = trailingPrice("up",reOpenPrice,reOpenDistance);
+         if(sellOportunity(sellInterest()) == true || Bid >= reOpenPrice)
+         {            
+            MarketOrderSend(Symbol(),OP_SELL,lots,Bid,10,NULL,NULL,NULL,magic,0,clrGreen);
+            reOpenPrice = trailingPrice("up",0,reOpenDistance);
+            state=Open_Hedge;
+         }   
+      break;
+      case Open_Hedge:
+         //We constantly check our re-entry pices
+         reOpenPrice = trailingPrice("up",reOpenPrice,reOpenDistance);
+         hedgePrice = trailingPrice("down",hedgePrice,hedgeDistance); 
+         
+         if(checkTakeProfit(TP,"sell")==true)
+            state = Finish;   
+            
+         for(int i = OrdersTotal()-1;i>=0;i--)
+         {
+            OrderSelect(i,SELECT_BY_POS,MODE_TRADES);
+            if(OrderMagicNumber() == magic)
+            {
+               firstEntryPrice = OrderOpenPrice();
+            }
+         }  
+         if(Ask < firstEntryPrice + 500*_Point)
+         {
+            if(buyOportunity(buyInterest()) == true || Ask >= hedgePrice)
+            {
+               CloseOrders(magic);
+               hedgePrice = trailingPrice("down",0,hedgeDistance);
+               state = Close_Hedge;
+            } 
+         }
+         if(Ask >= firstEntryPrice + 500*_Point)
+         {
+            if(buyOportunity(buyInterest()) == true || Ask >= hedgePrice)
+            {
+               CloseOrders(magic);
+               hedgePrice = trailingPrice("down",0,hedgeDistance);
+               state = Close_Hedge;
+            } 
+         }
+          
+      break;
+      case Close_Hedge:
+         if(checkTakeProfit(TP,"sell") == true)
+            state = Finish;   
+            
+         //We constantly check our re-entry pices
+         reOpenPrice = trailingPrice("up",reOpenPrice,reOpenDistance);
+         hedgePrice = trailingPrice("down",hedgePrice,hedgeDistance); 
+         if(sellOportunity(sellInterest()) == true || Bid <= reOpenPrice)
+         {
+            MarketOrderSend(Symbol(),OP_SELL,lots,Bid,10,NULL,NULL,NULL,magic,0,clrGreen);
+            reOpenPrice = trailingPrice("up",0,reOpenDistance);
+            state=Open_Hedge;
+         }
+         
+      break;
+      case Finish:
+         CloseOrders(magic);         
+         CloseOrders(magicHedge);
+         oportunity = false;
+         SendMail("Finish","Your pair has touched take profit");
+      break;
+      default:
+         SendMail("Error","Switch state got to default, but that should never happen");
+         break;
+   } //end of switch
+   }
   } //end of OnTick()
 
 
