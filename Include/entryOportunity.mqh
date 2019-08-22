@@ -17,7 +17,7 @@ bool buyOportunity(bool buyInterest)
    bool priceAtMin = false;
 
    //We check that our buyInterest is at a 7-day low or 20pips higher    
-   if(getLow("D1",buyDays) <= iLow(NULL,PERIOD_D1,1) + 200*_Point)
+   if(getLow("D1",buyDays) + 200*_Point >= iClose(NULL,PERIOD_D1,1) )
       priceAtMin = true;
    
    //We only buy if we have buyInterest and price is at a relative low
@@ -42,7 +42,7 @@ bool sellOportunity(bool sellInterest)
    bool priceAtMax = false;
 
    //We check that our sellInterest is at a 30-day high or 20pips lower    
-   if(getHigh("D1",sellDays) >= iHigh(NULL,PERIOD_D1,1) - 200*_Point)
+   if(getHigh("D1",sellDays) - 200*_Point <= iHigh(NULL,PERIOD_D1,1) )
       priceAtMax = true;
       
    if(sellInterest==true && priceAtMax == true)
