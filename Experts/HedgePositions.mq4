@@ -241,10 +241,8 @@ void CloseOrders(int magicN)
       Print("Magic: " , OrderMagicNumber());
       if(OrderMagicNumber() == magicN)
       {
-         Print("2");
          if(OrderType() == OP_BUY)
          {
-            Print("3");
             OrderClose(OrderTicket(),OrderLots(),MarketInfo(OrderSymbol(),MODE_BID),slippage);
          }
          if(OrderType() == OP_SELL)
