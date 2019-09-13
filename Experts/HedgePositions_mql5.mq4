@@ -8,15 +8,6 @@
 #property version   "1.00"
 #property strict
 
-//Includes
-#include <states.mqh>
-#include <entryInterest.mqh>
-#include <trailingPrice.mqh>
-#include <getLowMax.mqh>
-#include <entryOportunity.mqh>
-#include <checkTakeProfit.mqh>
-#include <UpDown.mqh>
-
 //Variables
 int magic = 17;
 int magicHedge = 18;
@@ -35,6 +26,19 @@ input double reOpenDistance = 500;
 double reOpenPrice = 0; //Price at which we will re-enter the market
 double hedgePrice = 0; //Price at which we open our hedge to cover from losses
 
+input int buyDays = 30;
+input int sellDays = 30;
+
+enum States
+{
+   Wait, //Wait for a better price before entering the market
+   First_Entry, //Make the first trade and start operating
+   Open_Hedge, //Hedge the position if it goes agains us
+   Close_Hedge, //Closes the hedge to enter the market again
+   Finish //Send an email to me to turn off the EA in that specific pair and find a new pair
+};
+
+States state;
 
 int OnInit()
   {
@@ -253,4 +257,306 @@ void CloseOrders(int magicN)
          Print("OrderMagicNumber Error: " , GetLastError());
       }
    }
+}
+
+//INCLUDES
+
+bool checkTakeProfit(double TP, string type)
+{  
+   //returns true if price has touched take profit. False if not
+   if(type == "buy")
+   {
+      if(Bid >= TP)
+         return true;
+      else
+         return false;   
+   }
+   if(type == "sell")
+   {
+      if(Ask <= TP)
+         return true;
+      else
+         return false;         
+   }
+   //IF there is an error, return false
+   return false;
+}
+
+bool buyInterest()
+{   
+   double mechaSize;
+   double mechaD1MinPips = 400*_Point;
+   double envolventeMinPips = 300*_Point;
+   double envolventeSize;
+ 
+   //Hammer with open >= close //Martillo
+   if(iOpen(NULL,PERIOD_D1,1) >= iClose(NULL,PERIOD_D1,1))
+   {
+      if((iClose(NULL,PERIOD_D1,1)-iLow(NULL,PERIOD_D1,1)) >= mechaD1MinPips)
+      {
+         //Candle's body must be at least half of the mecha
+         if((iOpen(NULL,PERIOD_D1,1)-iClose(NULL,PERIOD_D1,1))
+         < 2*(iClose(NULL,PERIOD_D1,1)-iLow(NULL,PERIOD_D1,1)))
+         {
+            mechaSize = iClose(NULL,PERIOD_D1,1) - iLow(NULL,PERIOD_D1,1);
+            //Upper mecha must be 1/3 or less of the size
+            if(iOpen(NULL,PERIOD_D1,1)+(mechaSize/3) > iHigh(NULL,PERIOD_D1,1)){
+               return true;
+            }
+         }         
+      }
+   //Hammer with close > Open //Martillo
+   }
+   if(iOpen(NULL,PERIOD_D1,1) < iClose(NULL,PERIOD_D1,1))
+   {
+      if((iOpen(NULL,PERIOD_D1,1)-iLow(NULL,PERIOD_D1,1)) >= mechaD1MinPips)
+      {
+         if((iClose(NULL,PERIOD_D1,1)-iOpen(NULL,PERIOD_D1,1))
+         < 2*(iOpen(NULL,PERIOD_D1,1)-iLow(NULL,PERIOD_D1,1)))
+         {
+            mechaSize = iOpen(NULL,PERIOD_D1,1) - iLow(NULL,PERIOD_D1,1);
+            //Upper mecha must be 1/3 or less of the size
+            if(iClose(NULL,PERIOD_D1,1)+(mechaSize/3) > iHigh(NULL,PERIOD_D1,1)){
+               return true;
+            }
+         } 
+      }
+   }
+   //Envolvente Alcista
+   if(iOpen(NULL,PERIOD_D1,2) > (iClose(NULL,PERIOD_D1,2) + envolventeMinPips))
+   {
+      if(iClose(NULL,PERIOD_D1,1) > iClose(NULL,PERIOD_D1,2))
+      {
+         envolventeSize = iOpen(NULL,PERIOD_D1,2) - iClose(NULL,PERIOD_D1,2);
+         if((iClose(NULL,PERIOD_D1,1) - iOpen(NULL,PERIOD_D1,1)) > 0.6*(envolventeSize))
+         {
+            if((iClose(NULL,PERIOD_D1,1) - iOpen(NULL,PERIOD_D1,1)) < 1.3 *(envolventeSize))
+            {
+               return true;
+            }
+         }
+      }
+   }
+   return false;
+}
+
+bool sellInterest()
+{
+   double mechaSize;
+   double mechaD1MinPips = 400*_Point;
+   double envolventeMinPips = 300*_Point;
+   double envolventeSize;
+ 
+   //Inverted Hammer with open >= close //Martillo invertido
+   if(iOpen(NULL,PERIOD_D1,1) >= iClose(NULL,PERIOD_D1,1))
+   {
+      mechaSize = iHigh(NULL,PERIOD_D1,1) - iOpen(NULL,PERIOD_D1,1);
+      if(mechaSize >= mechaD1MinPips)
+      {
+         //Candle's body must be at least half of the mecha
+         if((iOpen(NULL,PERIOD_D1,1)-iClose(NULL,PERIOD_D1,1)) < 2*mechaSize)
+         {           
+            //Upper mecha must be 1/3 or less of the size
+            if(iClose(NULL,PERIOD_D1,1)+(mechaSize/3) < iLow(NULL,PERIOD_D1,1)){
+               return true;
+            }
+         }         
+      }
+   //Inverted Hammer with close > Open //Martillo invertido
+   }
+   if(iOpen(NULL,PERIOD_D1,1) < iClose(NULL,PERIOD_D1,1))
+   {
+      mechaSize = iHigh(NULL,PERIOD_D1,1) - iClose(NULL,PERIOD_D1,1);
+      if(mechaSize >= mechaD1MinPips)
+      {
+         if((iClose(NULL,PERIOD_D1,1)-iOpen(NULL,PERIOD_D1,1)) < 2*mechaSize)
+         {            
+            //Upper mecha must be 1/3 or less of the size
+            if(iOpen(NULL,PERIOD_D1,1)+(mechaSize/3) < iLow(NULL,PERIOD_D1,1)){
+               return true;
+            }
+         } 
+      }
+   }
+   //Envolvente bajista
+   if(iOpen(NULL,PERIOD_D1,2) < (iClose(NULL,PERIOD_D1,2) - envolventeMinPips))
+   {
+      if(iClose(NULL,PERIOD_D1,1) < iClose(NULL,PERIOD_D1,2))
+      {
+         envolventeSize = iClose(NULL,PERIOD_D1,2) - iOpen(NULL,PERIOD_D1,2);
+         if((iOpen(NULL,PERIOD_D1,1) - iClose(NULL,PERIOD_D1,1)) > 0.6*(envolventeSize))
+         {
+            if(iOpen(NULL,PERIOD_D1,1) - (iClose(NULL,PERIOD_D1,1)) < 1.3 *(envolventeSize))
+            {
+               return true;
+            }
+         }
+      }
+   }
+   return false;
+}
+
+
+bool buyOportunity(bool buyInterest)
+{
+   bool priceAtMin = false;
+
+   //We check that our buyInterest is at a 7-day low or 20pips higher    
+   if(getLow("D1",buyDays) + 200*_Point >= iClose(NULL,PERIOD_D1,1) )
+      priceAtMin = true;
+   
+   //We only buy if we have buyInterest and price is at a relative low
+   if(buyInterest==true && priceAtMin == true)
+      return true;
+      
+   else if(buyInterest==false && priceAtMin == true)
+      return false;   
+      
+   else if(buyInterest==true && priceAtMin == false)
+      return false;
+      
+   else if(buyInterest==false && priceAtMin == false)
+      return false;
+        
+   else
+      return false;       
+}
+
+bool sellOportunity(bool sellInterest)
+{
+   bool priceAtMax = false;
+
+   //We check that our sellInterest is at a 30-day high or 20pips lower    
+   if(getHigh("D1",sellDays) - 200*_Point <= iHigh(NULL,PERIOD_D1,1) )
+      priceAtMax = true;
+      
+   if(sellInterest==true && priceAtMax == true)
+      return true;
+      
+   else if(sellInterest==false && priceAtMax == true)
+      return false;   
+      
+   else if(sellInterest==true && priceAtMax == false)
+      return false;
+      
+   else if(sellInterest==false && priceAtMax == false)
+      return false;
+        
+   else
+      return false;       
+}
+
+
+double getLow(string timeframe, int nCandles)
+{
+   double low = 999999;
+   
+   for(int i=0;i<nCandles;i++)
+   {
+      if(timeframe == "M30")
+      {
+         if(iLow(NULL,PERIOD_M30,i) < low)
+            low = iLow(NULL,PERIOD_M30,i);
+                  
+      }else if(timeframe == "H1")
+      {
+         if(iLow(NULL,PERIOD_H1,i) < low)     
+            low = iLow(NULL,PERIOD_H1,i);
+          
+      }else if(timeframe == "H4")
+      {
+         if(iLow(NULL,PERIOD_H4,i) < low)     
+            low = iLow(NULL,PERIOD_H4,i);
+      }else if(timeframe == "D1")
+      {
+         if(iLow(NULL,PERIOD_D1,i) < low)     
+            low = iLow(NULL,PERIOD_D1,i);
+      }else if(timeframe == "W1")
+      {
+         if(iLow(NULL,PERIOD_W1,i) < low)     
+            low = iLow(NULL,PERIOD_W1,i);
+      }
+   }
+   if(low == 999999)
+      Alert("Error in <getLowMax.mqh>. We return value of: ", low);
+    
+   return low;   
+}
+
+double getHigh(string timeframe, int nCandles)
+{
+   double high = 0;
+   
+   for(int i=0;i<nCandles;i++)
+   {
+      if(timeframe == "M30")
+      {
+         if(iHigh(NULL,PERIOD_M30,i) > high)
+            high = iHigh(NULL,PERIOD_M30,i);
+                  
+      }else if(timeframe == "H1")
+      {
+         if(iHigh(NULL,PERIOD_H1,i) > high)     
+            high = iHigh(NULL,PERIOD_H1,i);
+          
+      }else if(timeframe == "H4")
+      {
+         if(iHigh(NULL,PERIOD_H4,i) > high)     
+            high = iHigh(NULL,PERIOD_H4,i);
+      }else if(timeframe == "D1")
+      {
+         if(iHigh(NULL,PERIOD_D1,i) > high)     
+            high = iHigh(NULL,PERIOD_D1,i);
+      }else if(timeframe == "W1")
+      {
+         if(iHigh(NULL,PERIOD_W1,i) > high)     
+            high = iHigh(NULL,PERIOD_W1,i);
+      }
+   }
+   if(high == 0)
+      Alert("Error in <getLowMax.mqh>. We return value of: ", high);
+    
+   return high;   
+}
+
+
+double trailingPrice(string type, double trailingPrice, double distance)
+{  
+   distance = distance * _Point;
+   if(type == "up")
+   {
+      if(trailingPrice == 0)
+         return Bid - distance; //If trailingPrice is not set
+      else if(Bid - distance > trailingPrice)
+         return Bid - distance; //Price has increased, so we increase our trailing price
+      else if(Bid - distance <= trailingPrice)
+         return trailingPrice; //Price has decreased, so we return the same value   
+      
+      
+   }
+   else if(type == "down")
+   {
+      if(trailingPrice == 0)
+         return Ask+distance; //If trailingPrice is not set    
+      else if(Ask + distance > trailingPrice)
+         return trailingPrice; //Price has increased, so we return the same value
+      else if(Ask + distance <= trailingPrice)
+         return Ask + distance; //Price has decreased, so we lower our trailing price
+      
+   }else
+   {
+      return 0; //Error. This should never happen
+   }
+   return 0; //Error. This should never happen
+}
+
+
+bool UpDown(double startPrice, double TP)
+{
+   if(startPrice < TP)
+      return 1; //Up. Our position is long/buy
+   else if(startPrice > TP)
+      return 0; //Down. Our position is short/sell
+   else
+      return 0;   
 }
