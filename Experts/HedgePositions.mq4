@@ -49,6 +49,9 @@ void OnTick()
   {   
    if(UpDown == 1) //Long position
    {
+      if(checkTakeProfit(TP,"buy")==true)
+            state = Finish; 
+            
       switch(state)
       {
       case Wait:
@@ -72,10 +75,8 @@ void OnTick()
          //We constantly check our re-entry pices
          reOpenPrice = trailingPrice("down",reOpenPrice,reOpenDistance);
          hedgePrice = trailingPrice("up",hedgePrice,hedgeDistance); 
-         
-         if(checkTakeProfit(TP,"buy")==true)
-            state = Finish;   
-            
+             
+         //We select the price at which we opened last position   
          for(int i = OrdersTotal()-1;i>=0;i--)
          {
             OrderSelect(i,SELECT_BY_POS,MODE_TRADES);
@@ -93,7 +94,7 @@ void OnTick()
                state = Close_Hedge;
             } 
          }
-         if(Bid <= firstEntryPrice + 500*_Point)
+         else if(Bid <= firstEntryPrice + 500*_Point)
          {
             if(sellOportunity(sellInterest()) == true || Bid <= hedgePrice)
             {
@@ -105,9 +106,7 @@ void OnTick()
           
       break;
       case Close_Hedge:
-         if(checkTakeProfit(TP,"buy")==true)
-            state = Finish;   
-            
+                  
          //We constantly check our re-entry pices
          reOpenPrice = trailingPrice("down",reOpenPrice,reOpenDistance);
          hedgePrice = trailingPrice("up",hedgePrice,hedgeDistance); 
@@ -133,6 +132,9 @@ void OnTick()
    
    }else if(UpDown == 0) //Short position
    {
+      if(checkTakeProfit(TP,"sell")==true)
+            state = Finish;   
+            
       switch(state)
       {
       case Wait:
@@ -156,10 +158,8 @@ void OnTick()
          //We constantly check our re-entry pices
          reOpenPrice = trailingPrice("up",reOpenPrice,reOpenDistance);
          hedgePrice = trailingPrice("down",hedgePrice,hedgeDistance); 
-         
-         if(checkTakeProfit(TP,"sell")==true)
-            state = Finish;   
-            
+                    
+         //We select the price at which we opened last position           
          for(int i = OrdersTotal()-1;i>=0;i--)
          {
             OrderSelect(i,SELECT_BY_POS,MODE_TRADES);
@@ -168,7 +168,7 @@ void OnTick()
                firstEntryPrice = OrderOpenPrice();
             }
          }  
-         if(Ask < firstEntryPrice + 500*_Point)
+         if(Ask < firstEntryPrice - 500*_Point)
          {
             if(buyOportunity(buyInterest()) == true || Ask >= hedgePrice)
             {
@@ -177,7 +177,7 @@ void OnTick()
                state = Close_Hedge;
             } 
          }
-         if(Ask >= firstEntryPrice + 500*_Point)
+         else if(Ask >= firstEntryPrice - 500*_Point)
          {
             if(buyOportunity(buyInterest()) == true || Ask >= hedgePrice)
             {
@@ -188,13 +188,12 @@ void OnTick()
          }
           
       break;
-      case Close_Hedge:
-         if(checkTakeProfit(TP,"sell") == true)
-            state = Finish;   
+      case Close_Hedge:  
             
          //We constantly check our re-entry pices
          reOpenPrice = trailingPrice("up",reOpenPrice,reOpenDistance);
          hedgePrice = trailingPrice("down",hedgePrice,hedgeDistance); 
+         
          if(sellOportunity(sellInterest()) == true || Bid <= reOpenPrice)
          {
             MarketOrderSend(Symbol(),OP_SELL,lots,Bid,10,NULL,NULL,NULL,magic,0,clrRed);
