@@ -46,14 +46,14 @@ void OnDeinit(const int reason)
   {
   }
 void OnTick()
-  {
-   if(iHigh(NULL,PERIOD_W1,0) >= TP || iHigh(NULL,PERIOD_D1,1) >= TP)
-   {
-      //Price touched TP, so we stop operating that pair
-      state = Finish;      
-   }
+  {   
    if(UpDown == 1) //Long position
    {
+      if(iHigh(NULL,PERIOD_W1,0) >= TP || iHigh(NULL,PERIOD_D1,1) >= TP)
+      {
+         //Price touched TP, so we stop operating that pair
+         state = Finish;      
+      }
       switch(state)
       {
       case Wait:
@@ -138,6 +138,11 @@ void OnTick()
    
    }else if(UpDown == 0) //Short position
    {
+      if(iLow(NULL,PERIOD_W1,0) <= TP || iLow(NULL,PERIOD_D1,1) <= TP)
+      {
+         //Price touched TP, so we stop operating that pair
+         state = Finish;      
+      }
       switch(state)
       {
       case Wait:
