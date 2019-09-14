@@ -8,27 +8,6 @@
 #property version   "1.00"
 #property strict
 
-//Variables
-int magic = 17;
-int magicHedge = 18;
-input double lots = 0.01;
-input double TP = 1.17;
-input double startPrice = 1.155;
-double firstEntryPrice;
-bool UpDown;
-
-bool oportunity = true;
-int slippage = 10;
-
-//state = Hedge
-input double hedgeDistance = 400; //distance in points (not pips) from the low to SL - Entry point for hedge
-input double reOpenDistance = 500;
-double reOpenPrice = 0; //Price at which we will re-enter the market
-double hedgePrice = 0; //Price at which we open our hedge to cover from losses
-
-input int buyDays = 30;
-input int sellDays = 30;
-
 enum States
 {
    Wait, //Wait for a better price before entering the market
@@ -40,6 +19,28 @@ enum States
 
 States state;
 
+//Variables
+int magic = 17;
+int magicHedge = 18;
+input double lots = 0.01;
+input double TP = 1.17;
+input double startPrice = 1.155;
+double firstEntryPrice;
+bool UpDown;
+
+input int buyDays = 30;
+input int sellDays = 30;
+
+bool oportunity = true;
+int slippage = 10;
+
+//state = Hedge
+input double hedgeDistance = 400; //distance in points (not pips) from the low to SL - Entry point for hedge
+input double reOpenDistance = 500;
+double reOpenPrice = 0; //Price at which we will re-enter the market
+double hedgePrice = 0; //Price at which we open our hedge to cover from losses
+
+
 int OnInit()
   {
    state = Wait;
@@ -50,14 +51,12 @@ void OnDeinit(const int reason)
   {
   }
 void OnTick()
-  {
-   if(iHigh(NULL,PERIOD_W1,0) >= TP || iHigh(NULL,PERIOD_D1,1) >= TP)
-   {
-      //Price touched TP, so we stop operating that pair
-      state = Finish;      
-   }
+  {   
    if(UpDown == 1) //Long position
    {
+      if(checkTakeProfit(TP,"buy")==true)
+            state = Finish; 
+            
       switch(state)
       {
       case Wait:
@@ -81,10 +80,8 @@ void OnTick()
          //We constantly check our re-entry pices
          reOpenPrice = trailingPrice("down",reOpenPrice,reOpenDistance);
          hedgePrice = trailingPrice("up",hedgePrice,hedgeDistance); 
-         
-         if(checkTakeProfit(TP,"buy")==true)
-            state = Finish;   
-            
+             
+         //We select the price at which we opened last position   
          for(int i = OrdersTotal()-1;i>=0;i--)
          {
             OrderSelect(i,SELECT_BY_POS,MODE_TRADES);
@@ -102,7 +99,7 @@ void OnTick()
                state = Close_Hedge;
             } 
          }
-         if(Bid <= firstEntryPrice + 500*_Point)
+         else if(Bid <= firstEntryPrice + 500*_Point)
          {
             if(sellOportunity(sellInterest()) == true || Bid <= hedgePrice)
             {
@@ -114,9 +111,7 @@ void OnTick()
           
       break;
       case Close_Hedge:
-         if(checkTakeProfit(TP,"buy")==true)
-            state = Finish;   
-            
+                  
          //We constantly check our re-entry pices
          reOpenPrice = trailingPrice("down",reOpenPrice,reOpenDistance);
          hedgePrice = trailingPrice("up",hedgePrice,hedgeDistance); 
@@ -142,6 +137,9 @@ void OnTick()
    
    }else if(UpDown == 0) //Short position
    {
+      if(checkTakeProfit(TP,"sell")==true)
+            state = Finish;   
+            
       switch(state)
       {
       case Wait:
@@ -154,9 +152,9 @@ void OnTick()
       break;
       case First_Entry:
          reOpenPrice = trailingPrice("up",reOpenPrice,reOpenDistance);
-         if(sellOportunity(sellInterest()) == true || Bid >= reOpenPrice)
+         if(sellOportunity(sellInterest()) == true || Bid <= reOpenPrice)
          {            
-            MarketOrderSend(Symbol(),OP_SELL,lots,Bid,10,NULL,NULL,NULL,magic,0,clrGreen);
+            MarketOrderSend(Symbol(),OP_SELL,lots,Ask,10,NULL,NULL,NULL,magic,0,clrGreen);
             reOpenPrice = trailingPrice("up",0,reOpenDistance);
             state=Open_Hedge;
          }   
@@ -165,10 +163,8 @@ void OnTick()
          //We constantly check our re-entry pices
          reOpenPrice = trailingPrice("up",reOpenPrice,reOpenDistance);
          hedgePrice = trailingPrice("down",hedgePrice,hedgeDistance); 
-         
-         if(checkTakeProfit(TP,"sell")==true)
-            state = Finish;   
-            
+                    
+         //We select the price at which we opened last position           
          for(int i = OrdersTotal()-1;i>=0;i--)
          {
             OrderSelect(i,SELECT_BY_POS,MODE_TRADES);
@@ -177,7 +173,7 @@ void OnTick()
                firstEntryPrice = OrderOpenPrice();
             }
          }  
-         if(Ask < firstEntryPrice + 500*_Point)
+         if(Ask < firstEntryPrice - 500*_Point)
          {
             if(buyOportunity(buyInterest()) == true || Ask >= hedgePrice)
             {
@@ -186,7 +182,7 @@ void OnTick()
                state = Close_Hedge;
             } 
          }
-         if(Ask >= firstEntryPrice + 500*_Point)
+         else if(Ask >= firstEntryPrice - 500*_Point)
          {
             if(buyOportunity(buyInterest()) == true || Ask >= hedgePrice)
             {
@@ -197,16 +193,15 @@ void OnTick()
          }
           
       break;
-      case Close_Hedge:
-         if(checkTakeProfit(TP,"sell") == true)
-            state = Finish;   
+      case Close_Hedge:  
             
          //We constantly check our re-entry pices
          reOpenPrice = trailingPrice("up",reOpenPrice,reOpenDistance);
          hedgePrice = trailingPrice("down",hedgePrice,hedgeDistance); 
+         
          if(sellOportunity(sellInterest()) == true || Bid <= reOpenPrice)
          {
-            MarketOrderSend(Symbol(),OP_SELL,lots,Bid,10,NULL,NULL,NULL,magic,0,clrGreen);
+            MarketOrderSend(Symbol(),OP_SELL,lots,Bid,10,NULL,NULL,NULL,magic,0,clrRed);
             reOpenPrice = trailingPrice("up",0,reOpenDistance);
             state=Open_Hedge;
          }
@@ -259,27 +254,165 @@ void CloseOrders(int magicN)
    }
 }
 
-//INCLUDES
+bool UpDown(double startPrice, double TP)
+{
+   if(startPrice < TP)
+      return 1; //Up. Our position is long/buy
+   else if(startPrice > TP)
+      return 0; //Down. Our position is short/sell
+   else
+      return 0;   
+}
 
-bool checkTakeProfit(double TP, string type)
+double trailingPrice(string type, double trailingPrice, double distance)
 {  
-   //returns true if price has touched take profit. False if not
-   if(type == "buy")
+   distance = distance * _Point;
+   if(type == "up")
    {
-      if(Bid >= TP)
-         return true;
-      else
-         return false;   
+      if(trailingPrice == 0)
+         return Bid - distance; //If trailingPrice is not set
+      else if(Bid - distance > trailingPrice)
+         return Bid - distance; //Price has increased, so we increase our trailing price
+      else if(Bid - distance <= trailingPrice)
+         return trailingPrice; //Price has decreased, so we return the same value   
+      
+      
    }
-   if(type == "sell")
+   else if(type == "down")
    {
-      if(Ask <= TP)
-         return true;
-      else
-         return false;         
+      if(trailingPrice == 0)
+         return Ask+distance; //If trailingPrice is not set    
+      else if(Ask + distance > trailingPrice)
+         return trailingPrice; //Price has increased, so we return the same value
+      else if(Ask + distance <= trailingPrice)
+         return Ask + distance; //Price has decreased, so we lower our trailing price
+      
+   }else
+   {
+      return 0; //Error. This should never happen
    }
-   //IF there is an error, return false
-   return false;
+   return 0; //Error. This should never happen
+}
+
+double getLow(string timeframe, int nCandles)
+{
+   double low = 999999;
+   
+   for(int i=0;i<nCandles;i++)
+   {
+      if(timeframe == "M30")
+      {
+         if(iLow(NULL,PERIOD_M30,i) < low)
+            low = iLow(NULL,PERIOD_M30,i);
+                  
+      }else if(timeframe == "H1")
+      {
+         if(iLow(NULL,PERIOD_H1,i) < low)     
+            low = iLow(NULL,PERIOD_H1,i);
+          
+      }else if(timeframe == "H4")
+      {
+         if(iLow(NULL,PERIOD_H4,i) < low)     
+            low = iLow(NULL,PERIOD_H4,i);
+      }else if(timeframe == "D1")
+      {
+         if(iLow(NULL,PERIOD_D1,i) < low)     
+            low = iLow(NULL,PERIOD_D1,i);
+      }else if(timeframe == "W1")
+      {
+         if(iLow(NULL,PERIOD_W1,i) < low)     
+            low = iLow(NULL,PERIOD_W1,i);
+      }
+   }
+   if(low == 999999)
+      Alert("Error in <getLowMax.mqh>. We return value of: ", low);
+    
+   return low;   
+}
+
+double getHigh(string timeframe, int nCandles)
+{
+   double high = 0;
+   
+   for(int i=0;i<nCandles;i++)
+   {
+      if(timeframe == "M30")
+      {
+         if(iHigh(NULL,PERIOD_M30,i) > high)
+            high = iHigh(NULL,PERIOD_M30,i);
+                  
+      }else if(timeframe == "H1")
+      {
+         if(iHigh(NULL,PERIOD_H1,i) > high)     
+            high = iHigh(NULL,PERIOD_H1,i);
+          
+      }else if(timeframe == "H4")
+      {
+         if(iHigh(NULL,PERIOD_H4,i) > high)     
+            high = iHigh(NULL,PERIOD_H4,i);
+      }else if(timeframe == "D1")
+      {
+         if(iHigh(NULL,PERIOD_D1,i) > high)     
+            high = iHigh(NULL,PERIOD_D1,i);
+      }else if(timeframe == "W1")
+      {
+         if(iHigh(NULL,PERIOD_W1,i) > high)     
+            high = iHigh(NULL,PERIOD_W1,i);
+      }
+   }
+   if(high == 0)
+      Alert("Error in <getLowMax.mqh>. We return value of: ", high);
+    
+   return high;   
+}
+
+bool buyOportunity(bool buyInterest)
+{
+   bool priceAtMin = false;
+
+   //We check that our buyInterest is at a 7-day low or 20pips higher    
+   if(getLow("D1",buyDays) + 200*_Point >= iClose(NULL,PERIOD_D1,1) )
+      priceAtMin = true;
+   
+   //We only buy if we have buyInterest and price is at a relative low
+   if(buyInterest==true && priceAtMin == true)
+      return true;
+      
+   else if(buyInterest==false && priceAtMin == true)
+      return false;   
+      
+   else if(buyInterest==true && priceAtMin == false)
+      return false;
+      
+   else if(buyInterest==false && priceAtMin == false)
+      return false;
+        
+   else
+      return false;       
+}
+
+bool sellOportunity(bool sellInterest)
+{
+   bool priceAtMax = false;
+
+   //We check that our sellInterest is at a 30-day high or 20pips lower    
+   if(getHigh("D1",sellDays) - 200*_Point <= iHigh(NULL,PERIOD_D1,1) )
+      priceAtMax = true;
+      
+   if(sellInterest==true && priceAtMax == true)
+      return true;
+      
+   else if(sellInterest==false && priceAtMax == true)
+      return false;   
+      
+   else if(sellInterest==true && priceAtMax == false)
+      return false;
+      
+   else if(sellInterest==false && priceAtMax == false)
+      return false;
+        
+   else
+      return false;       
 }
 
 bool buyInterest()
@@ -396,167 +529,23 @@ bool sellInterest()
    return false;
 }
 
-
-bool buyOportunity(bool buyInterest)
-{
-   bool priceAtMin = false;
-
-   //We check that our buyInterest is at a 7-day low or 20pips higher    
-   if(getLow("D1",buyDays) + 200*_Point >= iClose(NULL,PERIOD_D1,1) )
-      priceAtMin = true;
-   
-   //We only buy if we have buyInterest and price is at a relative low
-   if(buyInterest==true && priceAtMin == true)
-      return true;
-      
-   else if(buyInterest==false && priceAtMin == true)
-      return false;   
-      
-   else if(buyInterest==true && priceAtMin == false)
-      return false;
-      
-   else if(buyInterest==false && priceAtMin == false)
-      return false;
-        
-   else
-      return false;       
-}
-
-bool sellOportunity(bool sellInterest)
-{
-   bool priceAtMax = false;
-
-   //We check that our sellInterest is at a 30-day high or 20pips lower    
-   if(getHigh("D1",sellDays) - 200*_Point <= iHigh(NULL,PERIOD_D1,1) )
-      priceAtMax = true;
-      
-   if(sellInterest==true && priceAtMax == true)
-      return true;
-      
-   else if(sellInterest==false && priceAtMax == true)
-      return false;   
-      
-   else if(sellInterest==true && priceAtMax == false)
-      return false;
-      
-   else if(sellInterest==false && priceAtMax == false)
-      return false;
-        
-   else
-      return false;       
-}
-
-
-double getLow(string timeframe, int nCandles)
-{
-   double low = 999999;
-   
-   for(int i=0;i<nCandles;i++)
-   {
-      if(timeframe == "M30")
-      {
-         if(iLow(NULL,PERIOD_M30,i) < low)
-            low = iLow(NULL,PERIOD_M30,i);
-                  
-      }else if(timeframe == "H1")
-      {
-         if(iLow(NULL,PERIOD_H1,i) < low)     
-            low = iLow(NULL,PERIOD_H1,i);
-          
-      }else if(timeframe == "H4")
-      {
-         if(iLow(NULL,PERIOD_H4,i) < low)     
-            low = iLow(NULL,PERIOD_H4,i);
-      }else if(timeframe == "D1")
-      {
-         if(iLow(NULL,PERIOD_D1,i) < low)     
-            low = iLow(NULL,PERIOD_D1,i);
-      }else if(timeframe == "W1")
-      {
-         if(iLow(NULL,PERIOD_W1,i) < low)     
-            low = iLow(NULL,PERIOD_W1,i);
-      }
-   }
-   if(low == 999999)
-      Alert("Error in <getLowMax.mqh>. We return value of: ", low);
-    
-   return low;   
-}
-
-double getHigh(string timeframe, int nCandles)
-{
-   double high = 0;
-   
-   for(int i=0;i<nCandles;i++)
-   {
-      if(timeframe == "M30")
-      {
-         if(iHigh(NULL,PERIOD_M30,i) > high)
-            high = iHigh(NULL,PERIOD_M30,i);
-                  
-      }else if(timeframe == "H1")
-      {
-         if(iHigh(NULL,PERIOD_H1,i) > high)     
-            high = iHigh(NULL,PERIOD_H1,i);
-          
-      }else if(timeframe == "H4")
-      {
-         if(iHigh(NULL,PERIOD_H4,i) > high)     
-            high = iHigh(NULL,PERIOD_H4,i);
-      }else if(timeframe == "D1")
-      {
-         if(iHigh(NULL,PERIOD_D1,i) > high)     
-            high = iHigh(NULL,PERIOD_D1,i);
-      }else if(timeframe == "W1")
-      {
-         if(iHigh(NULL,PERIOD_W1,i) > high)     
-            high = iHigh(NULL,PERIOD_W1,i);
-      }
-   }
-   if(high == 0)
-      Alert("Error in <getLowMax.mqh>. We return value of: ", high);
-    
-   return high;   
-}
-
-
-double trailingPrice(string type, double trailingPrice, double distance)
+bool checkTakeProfit(double TP, string type)
 {  
-   distance = distance * _Point;
-   if(type == "up")
+   //returns true if price has touched take profit. False if not
+   if(type == "buy")
    {
-      if(trailingPrice == 0)
-         return Bid - distance; //If trailingPrice is not set
-      else if(Bid - distance > trailingPrice)
-         return Bid - distance; //Price has increased, so we increase our trailing price
-      else if(Bid - distance <= trailingPrice)
-         return trailingPrice; //Price has decreased, so we return the same value   
-      
-      
+      if(Bid >= TP)
+         return true;
+      else
+         return false;   
    }
-   else if(type == "down")
+   if(type == "sell")
    {
-      if(trailingPrice == 0)
-         return Ask+distance; //If trailingPrice is not set    
-      else if(Ask + distance > trailingPrice)
-         return trailingPrice; //Price has increased, so we return the same value
-      else if(Ask + distance <= trailingPrice)
-         return Ask + distance; //Price has decreased, so we lower our trailing price
-      
-   }else
-   {
-      return 0; //Error. This should never happen
+      if(Ask <= TP)
+         return true;
+      else
+         return false;         
    }
-   return 0; //Error. This should never happen
-}
-
-
-bool UpDown(double startPrice, double TP)
-{
-   if(startPrice < TP)
-      return 1; //Up. Our position is long/buy
-   else if(startPrice > TP)
-      return 0; //Down. Our position is short/sell
-   else
-      return 0;   
+   //IF there is an error, return false
+   return false;
 }
