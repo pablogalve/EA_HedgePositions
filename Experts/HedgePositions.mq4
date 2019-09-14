@@ -49,11 +49,6 @@ void OnTick()
   {   
    if(UpDown == 1) //Long position
    {
-      if(iHigh(NULL,PERIOD_W1,0) >= TP || iHigh(NULL,PERIOD_D1,1) >= TP)
-      {
-         //Price touched TP, so we stop operating that pair
-         state = Finish;      
-      }
       switch(state)
       {
       case Wait:
@@ -138,11 +133,6 @@ void OnTick()
    
    }else if(UpDown == 0) //Short position
    {
-      if(iLow(NULL,PERIOD_W1,0) <= TP || iLow(NULL,PERIOD_D1,1) <= TP)
-      {
-         //Price touched TP, so we stop operating that pair
-         state = Finish;      
-      }
       switch(state)
       {
       case Wait:
@@ -155,9 +145,9 @@ void OnTick()
       break;
       case First_Entry:
          reOpenPrice = trailingPrice("up",reOpenPrice,reOpenDistance);
-         if(sellOportunity(sellInterest()) == true || Bid >= reOpenPrice)
+         if(sellOportunity(sellInterest()) == true || Bid <= reOpenPrice)
          {            
-            MarketOrderSend(Symbol(),OP_SELL,lots,Bid,10,NULL,NULL,NULL,magic,0,clrGreen);
+            MarketOrderSend(Symbol(),OP_SELL,lots,Ask,10,NULL,NULL,NULL,magic,0,clrGreen);
             reOpenPrice = trailingPrice("up",0,reOpenDistance);
             state=Open_Hedge;
          }   
@@ -207,7 +197,7 @@ void OnTick()
          hedgePrice = trailingPrice("down",hedgePrice,hedgeDistance); 
          if(sellOportunity(sellInterest()) == true || Bid <= reOpenPrice)
          {
-            MarketOrderSend(Symbol(),OP_SELL,lots,Bid,10,NULL,NULL,NULL,magic,0,clrGreen);
+            MarketOrderSend(Symbol(),OP_SELL,lots,Bid,10,NULL,NULL,NULL,magic,0,clrRed);
             reOpenPrice = trailingPrice("up",0,reOpenDistance);
             state=Open_Hedge;
          }
